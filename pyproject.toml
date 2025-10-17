@@ -35,6 +35,9 @@ dependencies = [
   "scipy>=1.10",
   "numpy>=1.26",
   "openai>=1.0",
+  "livekit>=1.0",
+  "livekit-agents>=1.2",
+  "livekit-plugins-openai>=1.2",
 ]
 
 [project.urls]
