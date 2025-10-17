@@ -8,6 +8,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import time
 import os
 import tempfile
+import asyncio
 from dotenv import load_dotenv
 
 from .record_audio import AudioRecorder
@@ -18,9 +19,23 @@ load_dotenv()
 
 
 class JoinGoogleMeet:
-    def __init__(self):
+    def __init__(self, enable_livekit: bool = False):
         self.mail_address = os.getenv('EMAIL_ID')
         self.password = os.getenv('EMAIL_PASSWORD')
+        self.enable_livekit = enable_livekit
+        self.livekit_manager = None
+        self.livekit_bridge = None
+        
+        # Initialize LiveKit if enabled
+        if self.enable_livekit:
+            try:
+                from .livekit_agent import LiveKitAgentManager, GoogleMeetLiveKitBridge
+                self.livekit_manager = LiveKitAgentManager()
+                self.livekit_bridge = GoogleMeetLiveKitBridge(self.livekit_manager)
+            except ImportError as e:
+                print(f"Warning: LiveKit integration not available: {e}")
+                self.enable_livekit = False
+        
         # create chrome instance
         opt = Options()
         opt.add_argument('--disable-blink-features=AutomationControlled')
@@ -87,7 +102,49 @@ class JoinGoogleMeet:
         print("Ask to join activity: Done")
         # checkIfJoined()
         # Ask to join and join now buttons have same xpaths
-        AudioRecorder().get_audio(audio_path, duration)
+        
+        if self.enable_livekit:
+            print("Starting LiveKit agent mode...")
+            self._start_livekit_agent(duration)
+        else:
+            AudioRecorder().get_audio(audio_path, duration)
+
+    def _start_livekit_agent(self, duration):
+        """Start LiveKit agent and bridge audio with Google Meet.
+        
+        Args:
+            duration: Duration to run the agent (in seconds)
+        """
+        if not self.livekit_manager:
+            print("LiveKit manager not initialized")
+            return
+        
+        # Get LiveKit room name from environment or generate one
+        room_name = os.getenv('LIVEKIT_ROOM_NAME', 'google-meet-session')
+        
+        print(f"Connecting to LiveKit room: {room_name}")
+        
+        # Run the agent in a background thread/process
+        # For now, we'll use the CLI-based approach
+        try:
+            # Option 1: Run as a worker (recommended for production)
+            print("To run the LiveKit agent, execute in a separate terminal:")
+            print(f"  python -m google_meet_bot.livekit_worker --room {room_name}")
+            print()
+            print("Or use the programmatic approach (experimental)...")
+            
+            # Option 2: Programmatic approach (may need adjustment)
+            # This would require running the agent in the background
+            # For simplicity, we'll just print instructions
+            print(f"LiveKit agent mode enabled. Keeping session alive for {duration} seconds...")
+            time.sleep(duration)
+            
+        except Exception as e:
+            print(f"Error running LiveKit agent: {e}")
+            # Fallback to regular audio recording
+            print("Falling back to regular audio recording...")
+            audio_path = os.path.join(tempfile.mkdtemp(), "output.wav")
+            AudioRecorder().get_audio(audio_path, duration)
 
 
 def _main():

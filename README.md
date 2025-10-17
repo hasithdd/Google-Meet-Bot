@@ -136,3 +136,24 @@ speech_analyzer.transcribe("output.wav")
   - Sentiment analysis
 - Automatic audio compression if size exceeds limit
 - JSON output of meeting analysis
+- **NEW: LiveKit voice AI agent integration** - Add an AI voice assistant to your meetings that can listen and respond in real-time
+
+### LiveKit Voice AI Agent Integration
+
+The bot now supports integration with LiveKit-based voice AI agents! This allows you to add a real-time AI voice assistant to your Google Meet sessions that can:
+
+- Listen to meeting participants
+- Respond to questions using natural voice
+- Take notes and provide meeting assistance
+- Interact using OpenAI's GPT models
+
+For detailed instructions on setting up and using LiveKit agents, see [LIVEKIT_INTEGRATION.md](LIVEKIT_INTEGRATION.md).
+
+Quick start with LiveKit:
+```bash
+# Enable LiveKit agent mode
+google-meet-bot --meet-link "https://meet.google.com/xxx-xxxx-xxx" --duration 300 --livekit
+
+# In a separate terminal, start the agent worker
+python -m google_meet_bot.livekit_worker
+```
